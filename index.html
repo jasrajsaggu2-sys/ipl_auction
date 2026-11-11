@@ -947,12 +947,13 @@ function hypeOf(p){
   S.hype=S.hype||{};
   if(S.hype[p.name]==null){
     var h=Math.exp(gauss()*.42),r=Math.random();
-    if(r<.10)h*=1.7+Math.random()*1.1;        /* bidding-war player */
+    if(r<.10)h*=1.4+Math.random()*.5;        /* bidding-war player */
     else if(r<.22)h*=.4+Math.random()*.25;    /* sleeper, goes cheap */
-    S.hype[p.name]=Math.max(.35,Math.min(3.2,h));
+    S.hype[p.name]=Math.max(.35,Math.min(2,h));
   }
   return S.hype[p.name];
 }
+function softCap(c){c*=.78;return c<=550?c:550+1700*(1-Math.exp(-(c-550)/1700))}
 function aiCeil(t,p,set){
   if(canBuy(t,p,p.base))return 0;
   if(t.squad.length>=(t.cap||30))return 0;
@@ -982,8 +983,9 @@ function aiCeil(t,p,set){
     else c=Math.max(c,val*m*(2.8+Math.random()*2.6),p.base*(1.8+Math.random()*1.6));
   }
   c*=hypeOf(p);
+  c=softCap(c);   /* realistic top end: only a handful of stars cross ₹15-20 Cr, ₹25 Cr+ is rare */
   if(set.accel&&needFill)c=Math.max(c,p.base);
-  if(c>PRICECAP&&Math.random()>.1)c=PRICECAP;  /* most players stay under ₹30 Cr; a rare bidding war can go past it */
+  if(c>PRICECAP)c=PRICECAP;
   var share=p.rating>=88?.5:p.rating>=80?.38:.28;if(c>t.purse*share)c=Math.max(p.base,t.purse*share);   /* no room blows its purse on one player */
   return Math.floor(c/5)*5;
 }
@@ -1093,8 +1095,8 @@ function rollHype(){
   /* per-player market mood: some go cheap, some spark a bidding war */
   var h=Math.exp(gauss()*.6),x=Math.random();
   if(x<.12)h*=.5;else if(x>.88)h*=1.6;
-  if(Math.random()<.06)h*=Math.random()<.5?.2:3.5;  /* wild cards: giveaways and madness */
-  return Math.max(.08,Math.min(5,h));
+  if(Math.random()<.06)h*=Math.random()<.5?.2:1.8;  /* wild cards: giveaways and madness */
+  return Math.max(.08,Math.min(2.2,h));
 }
 function startLot(p,set){
   var ceil={};p.hype=rollHype();
